@@ -16,12 +16,122 @@ float usage;                //numero de clientes en el canal
 double blocked;             //numero total de blockeos
 double total_arrivals = 0;  //numero total de arrivos
 vector<vector<int>> links;  //links         [links_id]->[capacidad,uso]
-vector<vector<int>> users;  //usuarios      [usuario_id]->[llegadas,blokeo,#hops,the_hops]
+vector<vector<int>> users;  //usuarios      [usuario_id]->[llegadas,blokeo,#hops,the_hops(links_id's)]
+
+
+vector<vector<int>> wavelenght_map; //tabla de uso de los labdas de la red [lambda_id] -> [links_id]
+
 
 random_device rd;
 mt19937_64 seed (rd());
 
 //////////////////////--funtions--//////////////////////////////////////////////////
+
+void save_wavelenght_map_csv(string file_name = "default_csv"){
+	int max_wavelenght = wavelenght_map.size();
+	int max_link_id = wavelenght_map[0].size();
+	string value;
+
+	ofstream csv;
+    csv.open (file_name);
+    csv << "Links id's:" << ",";
+    for (int i = 0; i < max_link_id; i++)
+    {
+    	if(i == max_link_id-1){
+    		csv << i << "\n";
+    	}else{
+    		csv << i << ",";
+    	}
+    }
+    for (int x = 0; x < max_wavelenght; x++)
+    {
+    	csv << "Lambda_" << x << ",";
+    	for (int i = 0; i < max_link_id; i++)
+    	{
+
+	    	if (wavelenght_map[x][i] == -1){
+	    		value = "";
+	    	}else{
+	    		value = to_string(wavelenght_map[x][i]);
+	    	}
+
+	    	if(i == max_link_id-1){
+	    		csv << value << "\n";
+	    	}else{
+	    		csv << value << ",";
+	    	}
+   		}
+    }
+    
+    csv.close();  
+
+}
+
+
+
+int find_lambda(int user_id){//metodo First-fit
+	int max_wavelenght = wavelenght_map.size();
+	int lambda = -1;
+	int link_id;
+	bool stop;
+
+	for (int i = 0; i < max_wavelenght; ++i)
+	{
+		stop = false;
+		for (int x = 0; x < users[user_id][2]; ++x)
+		{
+			link_id = users[user_id][3+x];
+			if (wavelenght_map[i][link_id] == -1) //longitud disponible en enlase
+			{
+				stop = false;
+				continue;
+			}else{
+				stop = true;
+				break;//longitud no disponible, ocupar la siguiente
+			}
+			
+		}
+
+		if (stop == false)
+		{
+			lambda = i;
+			break;
+		}
+	}
+
+	return lambda;
+}
+
+void reserve_lambda(int user_id,int lambda_id){//metodo First-fit
+	int link_id;
+
+	if (lambda_id != -1)
+	{
+		for (int x = 0; x < users[user_id][2]; ++x)
+		{
+			link_id = users[user_id][3+x];
+			wavelenght_map[lambda_id][link_id] = user_id;
+		}
+	}else{
+		cout << "Cant assign -1 lambda" <<endl;
+	}
+	
+}
+void free_lambda(int user_id,int lambda_id){//metodo First-fit
+	int link_id;
+	if (lambda_id != -1)
+	{
+		for (int x = 0; x < users[user_id][2]; ++x)
+		{
+			link_id = users[user_id][3+x];
+			wavelenght_map[lambda_id][link_id] = -1;
+		}
+	}else{
+		cout << "Cant free -1 lambda" <<endl;
+	}
+}
+
+//------------
 
 float probability(float lambda){ //calculo de tiempo exponencial
     return (-1.0/lambda)*log(1-lcgrand(seed()%100)); // probabilidad exponecial
@@ -121,7 +231,7 @@ int main(int argc, char *argv[])  // argumentos : nombre_de_red, capcidad de enl
     int hop_counter = 0;
     int init_flag=0;
 
-    //-------------------routes parsing---------------------
+    //-------------------routes loading---------------------
     while(getline(infile,line,'\t')){
         istringstream stream(line);
         while(getline(stream,temp_str,'\n')){
@@ -134,6 +244,13 @@ int main(int argc, char *argv[])  // argumentos : nombre_de_red, capcidad de enl
             }else if (counter == 11) {// se extrae la cantidad de enlases totales
                 temp = stoi(temp_str);
                 links.resize(temp);
+
+                wavelenght_map.resize(C);
+                for (int i = 0; i < C; ++i)
+                {
+                	wavelenght_map[i].resize(temp,-1);
+                }
+
             }else if (counter>19){    // se comoensa a estraer la informacion del archivo (no header)
                 if (load_status==0) { // se extrae el nodo_1
                     node_1 = stoi(temp_str);
@@ -196,6 +313,19 @@ int main(int argc, char *argv[])  // argumentos : nombre_de_red, capcidad de enl
         prob_temp = probability(lambda);
         pushEvento(crearEvento(1,i,prob_temp));          //1 is on
     }
+
+    
+
+
+    //----------testing-----------------
+    for (int i = 0; i < users.size(); ++i)
+    {
+    	reserve_lambda(i,find_lambda(i));
+    }
+
+
+    save_wavelenght_map_csv();
+
     //-----------------simulation--------------------------
 
     while (LLEGADAS > total_arrivals) {     //simulation con condicion de parada
