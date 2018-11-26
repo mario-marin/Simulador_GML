@@ -142,8 +142,10 @@ int arrive_user(int id_user, float lambda,float mu, float sim_time){
     total_arrivals++;        // se aumenta las llegadas totales
     bool enable_flag = true; // flag indica si todos los enlases del usuario estan disponibles
 
-    users[id_user][0] = users[id_user][0] + 1;      // se aumenta las llegadas del usuario entrante
+    int temp_lambda; 		 // lambda asignado para el usuario
 
+    users[id_user][0] = users[id_user][0] + 1;      // se aumenta las llegadas del usuario entrante
+/*
     for (int i = 0; i < users[id_user][2]; ++i) {   // se revisa si los enlases ocupados por el usuario se encuentran disponibles
         if (links[users[id_user][3+i]][0] > links[users[id_user][3+i]][1] ) {// revision de capacidad
             continue;
@@ -151,8 +153,27 @@ int arrive_user(int id_user, float lambda,float mu, float sim_time){
             enable_flag = false; //si almenos un enlase reporta no tener suficiente capacidad el usuario es bloqueado
             break;
         }
+
+    }
+*/
+    temp_lambda = find_lambda(id_user);
+
+    if (temp_lambda != -1) //si se asgino un lambda valido
+    {
+    	reserve_lambda(id_user,temp_lambda);		  // se reservar los recursos
+    	prob_temp = probability(mu);              //calculo de tiempo de salida
+        pushEvento(crearEvento(0,id_user,temp_lambda,prob_temp+sim_time)); //se agrega al scheduler
+        return 100;
+    }else{
+ 		blocked++;                                // se aumenta los usuarios bloqueados totales
+        users[id_user][1] = users[id_user][1] + 1;// se aumentan el contador de bloqueos del usuario
+        prob_temp = probability(lambda);          // calculo de tiempo de siguiente llegada
+        pushEvento(crearEvento(1,id_user,-1,prob_temp+sim_time)); //se agrega al scheduler
+        return 404;
     }
 
+
+/*
     if (enable_flag == true ) {                      // si el for anterior no reporto enlases no-disponibles, entonses se procede con la reservacion del enelase
         for (int i = 0; i < users[id_user][2]; ++i) {// se aumenta el uso del link extrallendo su id desde el usuario
             links[users[id_user][3+i]][1] = links[users[id_user][3+i]][1] + 1;
@@ -167,15 +188,20 @@ int arrive_user(int id_user, float lambda,float mu, float sim_time){
         pushEvento(crearEvento(1,id_user,prob_temp+sim_time)); //se agrega al scheduler
         return 404;
     }
+    */
 }
 
-int exit_user(int id_user, float lambda, float sim_time){
+int exit_user(int id_user,int assigned_lambda, float lambda, float sim_time){
      float prob_temp;
+     /*
      for (int i = 0; i < users[id_user][2]; ++i) { //se libera el espacio ocupado por el usuario en todos los enlases
          links[users[id_user][3+i]][1] = links[users[id_user][3+i]][1] - 1;
      }
+     */
+     free_lambda(id_user,assigned_lambda);
+
      prob_temp = probability(lambda);                           //calculo de tiempo de llegada
-     pushEvento(crearEvento(1,id_user,prob_temp+sim_time)); //se agrega al scheduler
+     pushEvento(crearEvento(1,id_user,-1,prob_temp+sim_time)); //se agrega al scheduler
      return 0;
 }
 
@@ -311,13 +337,15 @@ int main(int argc, char *argv[])  // argumentos : nombre_de_red, capcidad de enl
 
     for (unsigned int i = 0; i < users.capacity(); ++i) {// se unizialisa la simulacion
         prob_temp = probability(lambda);
-        pushEvento(crearEvento(1,i,prob_temp));          //1 is on
+        pushEvento(crearEvento(1,i,-1,prob_temp));          //1 is on
     }
 
     
 
 
+
     //----------testing-----------------
+    /*
     for (int i = 0; i < users.size(); ++i)
     {
     	reserve_lambda(i,find_lambda(i));
@@ -325,6 +353,7 @@ int main(int argc, char *argv[])  // argumentos : nombre_de_red, capcidad de enl
 
 
     save_wavelenght_map_csv();
+    */
 
     //-----------------simulation--------------------------
 
@@ -339,13 +368,14 @@ int main(int argc, char *argv[])  // argumentos : nombre_de_red, capcidad de enl
         if(evento_temp->tipo == 1){         //se verifica si es una llegada o salida
             arrive_user(evento_temp->usuario,lambda,mu,sim_time); //se procesa la llegada
         } else {
-            exit_user(evento_temp->usuario, lambda,sim_time);         //se procesa la salida
+            exit_user(evento_temp->usuario,evento_temp->lambda , lambda,sim_time);         //se procesa la salida
         }
         free(evento_temp);                  //se elimina el evento procesado
 
     }
 
     print_results(max_hops);// se imprimen los datos para jupyter
+    save_wavelenght_map_csv();
     return 0;
 
 }

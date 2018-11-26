@@ -3,6 +3,7 @@
 typedef struct mnodo{
   int tipo;
   int usuario;
+  int lambda;
   double tiempo;
   struct mnodo *next;
 }Evento;
@@ -40,10 +41,11 @@ void pushEvento(Evento* pEvento){
   return;
 }
 
-Evento *crearEvento(int tipo,int usuario,float tiempo){
+Evento *crearEvento(int tipo,int usuario,int lambda,float tiempo){
   Evento *p=(struct mnodo *)malloc(sizeof(Evento));
   p->tipo=tipo;
   p->usuario=usuario;
+  p->lambda=lambda;
   p->tiempo=tiempo;
   p->next=NULL;
   return p;
