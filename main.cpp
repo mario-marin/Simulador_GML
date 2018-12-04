@@ -233,9 +233,8 @@ int main(int argc, char *argv[])  // argumentos : nombre_de_red, capcidad de enl
     string file = argv[1];
     string rut = file+".rut";
     int C = atoi(argv[2]);
-    long int LLEGADAS = atoi(argv[3]);  //criterio de finalizasion
-    float ton = atof(argv[4]);
-    float carga = atof(argv[5]);
+    float ton = atof(argv[3]);
+    float carga = atof(argv[4]);
     float toff = (ton-carga*ton)/carga;
 
 
@@ -357,7 +356,13 @@ int main(int argc, char *argv[])  // argumentos : nombre_de_red, capcidad de enl
 
     //-----------------simulation--------------------------
 
-    while (LLEGADAS > total_arrivals) {     //simulation con condicion de parada
+    double relative_error = 0.05;
+    double z_alfa_2 = 1.96;
+    double prob = 0;
+    double ER = 100;
+    double IC = 10000000000000000;
+
+    do {     //simulation con condicion de parada
 
         evento_temp = popEvento();
 
@@ -372,7 +377,19 @@ int main(int argc, char *argv[])  // argumentos : nombre_de_red, capcidad de enl
         }
         free(evento_temp);                  //se elimina el evento procesado
 
-    }
+        if(total_arrivals > 1000){
+            prob = blocked/total_arrivals;
+            //cout << prob << endl;
+            if( prob != 0.0 && total_arrivals < 10000000){
+                IC = prob + z_alfa_2* sqrt((prob*(1-prob))/total_arrivals);
+                ER = prob + prob*relative_error/2;
+            }else if(prob == 0.0 && total_arrivals > 10000000){
+                break;
+            }
+        }
+
+    }while(IC > ER);
+
 
     print_results(max_hops);// se imprimen los datos para jupyter
     save_wavelenght_map_csv();
