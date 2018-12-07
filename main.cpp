@@ -105,14 +105,18 @@ int arrive_user(int id_user, float lambda,float mu, float sim_time){
     if (temp_lambda != -1) //si se asgino un lambda valido
     {
     	reserve_lambda(id_user,temp_lambda);		  // se reservar los recursos
-    	prob_temp = probability(mu);              //calculo de tiempo de salida
-        pushEvento(crearEvento(0,id_user,temp_lambda,prob_temp+sim_time)); //se agrega al scheduler
+        if(generate  == 1){
+            prob_temp = probability(mu);              //calculo de tiempo de salida
+            pushEvento(crearEvento(0,id_user,temp_lambda,prob_temp+sim_time)); //se agrega al scheduler
+        }
         return 100;
     }else{
  		blocked++;                                // se aumenta los usuarios bloqueados totales
         users[id_user][1] = users[id_user][1] + 1;// se aumentan el contador de bloqueos del usuario
-        prob_temp = probability(lambda);          // calculo de tiempo de siguiente llegada
-        pushEvento(crearEvento(1,id_user,-1,prob_temp+sim_time)); //se agrega al scheduler
+        if(generate  == 1){
+            prob_temp = probability(lambda);          // calculo de tiempo de siguiente llegada
+            pushEvento(crearEvento(1,id_user,-1,prob_temp+sim_time)); //se agrega al scheduler
+        }
         return 404;
     }
 
@@ -126,9 +130,10 @@ int exit_user(int id_user,int assigned_lambda, float lambda, float sim_time){
      }
      */
      free_lambda(id_user,assigned_lambda);
-
-     prob_temp = probability(lambda);                           //calculo de tiempo de llegada
-     pushEvento(crearEvento(1,id_user,-1,prob_temp+sim_time)); //se agrega al scheduler
+     if(generate  == 1){
+         prob_temp = probability(lambda);                           //calculo de tiempo de llegada
+         pushEvento(crearEvento(1,id_user,-1,prob_temp+sim_time)); //se agrega al scheduler
+    }
      return 0;
 }
 
