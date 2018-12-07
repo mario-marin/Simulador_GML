@@ -12,6 +12,7 @@
 using namespace std;
 
 //////////////////////--global variables--//////////////////////////////////////////
+int generate;               //generate flag
 float usage;                //numero de clientes en el canal
 double blocked;             //numero total de blockeos
 double total_arrivals = 0;  //numero total de arrivos
@@ -43,7 +44,6 @@ int find_lambda(int user_id){//metodo First-fit
 				stop = true;
 				break;//longitud no disponible, ocupar la siguiente
 			}
-			
 		}
 
 		if (stop == false)
@@ -132,6 +132,41 @@ int exit_user(int id_user,int assigned_lambda, float lambda, float sim_time){
      return 0;
 }
 
+void load_scheduler(){
+    string line;
+    string temp_str;
+    ifstream time_line_in;
+    time_line_in.open ("./timeline");
+    int counter = 0;
+
+    int tipo;
+    int usuario;
+    int lambda;
+    double tiempo;
+
+    while(getline(time_line_in,line)){
+        istringstream stream(line);
+        while(getline(stream,temp_str,',')){
+            if (counter == 0){
+                tipo = stoi(temp_str);
+                counter++;
+            }else if (counter == 1){
+                usuario = stoi(temp_str);
+                counter++;
+            }else if (counter == 2){
+                lambda = stoi(temp_str);
+                counter++;
+            }else if (counter == 3){
+                tiempo = stod(temp_str);
+                counter++;
+            }
+        }
+        pushEvento(crearEvento(tipo,usuario,lambda,tiempo));
+        counter = 0;
+    }
+}
+
+
 ////////////////////////////--code--///////////////////////////////////////
 
 
@@ -148,7 +183,10 @@ int main(int argc, char *argv[])  // argumentos : nombre_de_red, capcidad de enl
     float mu = 1.0/(ton);
     float prob_temp;
     double sim_time = 0;
+    generate = atoi(argv[5]);
     Evento * evento_temp;
+  
+    vector<Evento * > event_log;
     
     //-------------------routes loading---------------------
     
@@ -156,21 +194,15 @@ int main(int argc, char *argv[])  // argumentos : nombre_de_red, capcidad de enl
 
     //-----------------init block--------------------------
 
-    for (unsigned int i = 0; i < users.capacity(); ++i) {// se unizialisa la simulacion
-        prob_temp = probability(lambda);
-        pushEvento(crearEvento(1,i,-1,prob_temp));          //1 is on
+    if (generate == 1){
+        for (unsigned int i = 0; i < users.capacity(); ++i) {// se unizialisa la simulacion
+            prob_temp = probability(lambda);
+            pushEvento(crearEvento(1,i,-1,prob_temp));          //1 is on
+        }  
     }
-
+    
     //----------testing-----------------
-    /*
-    for (int i = 0; i < users.size(); ++i)
-    {
-    	reserve_lambda(i,find_lambda(i));
-    }
-
-
-    save_wavelenght_map_csv();
-    */
+    //load_scheduler();
 
     //-----------------simulation--------------------------
 
@@ -180,9 +212,22 @@ int main(int argc, char *argv[])  // argumentos : nombre_de_red, capcidad de enl
     double ER = 100;
     double IC = 10000000000000000;
 
+    ofstream time_line_out;
+
+    if (generate == 1){
+        time_line_out.open ("./timeline");
+    }else if (generate == 0){
+        load_scheduler();
+    }
+
     do {     //simulation con condicion de parada
 
         evento_temp = popEvento();
+
+        if (generate == 1){
+            time_line_out << evento_temp->tipo << "," << evento_temp->usuario << "," << evento_temp->lambda << ","<< evento_temp->tiempo << endl;
+        }
+        
 
         if(sim_time != evento_temp->tiempo){//se verifica que el evento extraido no ocurrio al mismo tiempo que el evento anterior (coliciones)
             sim_time = evento_temp->tiempo;
@@ -211,6 +256,8 @@ int main(int argc, char *argv[])  // argumentos : nombre_de_red, capcidad de enl
 
     print_results(users,max_hops,blocked,total_arrivals);// se imprimen los datos para jupyter
     save_wavelenght_map_csv(wavelenght_map);
+
+    time_line_out.close();
     return 0;
 
 }
