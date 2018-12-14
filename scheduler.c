@@ -1,20 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
+
 typedef struct mnodo{
   int tipo;
-  int usuario;
-  int lambda;
-  double tiempo;
+  int index;
+  float tiempo;
   struct mnodo *next;
 }Evento;
-
-void pushEvento(Evento* pEvento);
-Evento *crearEvento(int tipo,int usuario,float tiempo);
-Evento *popEvento();
-
-void imprimirScheduler();
-int schedulerIsEmpty();
-
 
 static Evento *pScheduler=NULL;
 
@@ -41,12 +33,11 @@ void pushEvento(Evento* pEvento){
   return;
 }
 
-Evento *crearEvento(int tipo,int usuario,int lambda,float tiempo){
-  Evento *p=(struct mnodo *)malloc(sizeof(Evento));
-  p->tipo=tipo;
-  p->usuario=usuario;
-  p->lambda=lambda;
-  p->tiempo=tiempo;
+Evento *crearEvento(int t, int i,float tt){
+  Evento *p=(struct mnodo*)malloc(sizeof(Evento));
+  p->tipo=t;
+  p->index=i;
+  p->tiempo=tt;
   p->next=NULL;
   return p;
 }
@@ -61,7 +52,7 @@ Evento *popEvento(){
 void imprimirScheduler(){
   Evento *p=pScheduler;
   while(p!=NULL){
-    printf("(%i,%i,%f) ",p->tipo,p->usuario,p->tiempo);
+    printf("(%i,%f) ",p->tipo,p->tiempo);
     p=p->next;
   }
   printf("\n");

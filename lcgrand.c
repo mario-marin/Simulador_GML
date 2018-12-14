@@ -54,7 +54,7 @@ static long zrng[] =
    
 /* Generate the next random number. */   
    
-float lcgrand(int stream)   
+double lcgrand(int stream)   
 {   
     long zi, lowprd, hi31;   
    
