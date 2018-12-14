@@ -14,10 +14,11 @@ using namespace std;
 //////////////////////--global variables--//////////////////////////////////////////
 int generate;               //generate flag
 float usage;                //numero de clientes en el canal
-double blocked;             //numero total de blockeos
+double blocked = 0;             //numero total de blockeos
 double total_arrivals = 0;  //numero total de arrivos
 vector<vector<int>> users;  //usuarios      [usuario_id]->[llegadas,blokeo,#hops,the_hops(links_id's)]
 vector<vector<int>> wavelenght_map; //tabla de uso de los labdas de la red [lambda_id] -> [links_id]
+vector<string> name_user;
 
 random_device rd;
 mt19937_64 seed (rd());
@@ -195,7 +196,7 @@ int main(int argc, char *argv[])  // argumentos : nombre_de_red, capcidad de enl
     
     //-------------------routes loading---------------------
     
-    load_routes_file(users,wavelenght_map,max_hops,rut,C);
+    load_routes_file(users,wavelenght_map,max_hops,rut,C,name_user);
 
     //-----------------init block--------------------------
 
@@ -245,7 +246,7 @@ int main(int argc, char *argv[])  // argumentos : nombre_de_red, capcidad de enl
         }
         free(evento_temp);                  //se elimina el evento procesado
 
-        if(total_arrivals > 1000){
+        if(total_arrivals > 10000){
             prob = blocked/total_arrivals;
             //cout << prob << endl;
             if( prob != 0.0 && total_arrivals < 10000000){
@@ -259,7 +260,7 @@ int main(int argc, char *argv[])  // argumentos : nombre_de_red, capcidad de enl
     }while(IC > ER);
 
 
-    print_results(users,max_hops,blocked,total_arrivals);// se imprimen los datos para jupyter
+    print_results(users,name_user,blocked,total_arrivals);// se imprimen los datos para jupyter
     save_wavelenght_map_csv(wavelenght_map);
 
     time_line_out.close();

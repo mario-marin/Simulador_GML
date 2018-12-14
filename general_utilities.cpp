@@ -47,22 +47,17 @@ void save_wavelenght_map_csv( vector<vector<int>> wavelenght_map,string file_nam
 }
 
 
-void print_results(vector<vector<int>>users,int max_hops,int blocked,int total_arrivals){//funcion que imprime datos para desplegar en jupyter
-    vector<vector<float>> stats;// [cada indise es un largo de hops partiendo en 1]->[promedio de probabilidades,numero de ocurrencias]
-    stats.resize(max_hops);
-    for (unsigned int i = 0; i < stats.capacity(); ++i) { // inicialisacion del vector generado.
-        stats[i].resize(2);
-        stats[i][0] = 0;
-        stats[i][1] = 0;
+void print_results(vector<vector<int>>users,vector<string> name_user,double blocked,double total_arrivals){//funcion que imprime datos para desplegar en jupyter
+    cout << "Lista de usuarios con su probabilidad de bloqueo" << endl;
+    for(unsigned int i=0;i < users.capacity();i++){
+        if((float)users[i][0] == 0.0){
+            cout << name_user[i] << " :" << "Nunca llego" << endl;
+        }else{
+            cout << name_user[i] << " :" << (float)users[i][1]/(float)users[i][0] << endl;
+        }
+        
     }
-    for (unsigned int i = 0; i < users.capacity(); ++i) {
-        stats[users[i][2]-1][0] = (float)users[i][1]/(float)users[i][0] + stats[users[i][2]-1][0]; // suma de probablidades con el mismo largo
-        stats[users[i][2]-1][1] = stats[users[i][2]-1][1] + 1;                                     //cantidad de sumas para calcular el promedio
-    }
-    for (unsigned int i = 0; i < stats.capacity(); ++i) {// se imprime las probabilidades de bloqueo optenidos de cada usuario
-        cout << stats[i][0]/stats[i][1] << endl;
-    }
-    cout << blocked/total_arrivals << endl;             // se entrega el prob de blokeo de la red completa
+    cout << "Probabilidad de bloqueo de la red: " << blocked/total_arrivals << endl;             // se entrega el prob de blokeo de la red completa
 }
 
 
@@ -71,7 +66,7 @@ void print_results(vector<vector<int>>users,int max_hops,int blocked,int total_a
 
 
 
-void load_routes_file(vector<vector<int>> & users,vector<vector<int>> & wavelenght_map,int & max_hops, string rut,int C){
+void load_routes_file(vector<vector<int>> & users,vector<vector<int>> & wavelenght_map,int & max_hops, string rut,int C, vector<string> & name_user){
 
     ifstream infile("./Redes\ y\ Rutas/Rutas/"+rut);
     string line;
@@ -95,6 +90,7 @@ void load_routes_file(vector<vector<int>> & users,vector<vector<int>> & waveleng
             if (counter==7) {         // se extrae la cantidad de usuarios totales
                 temp = stoi(temp_str);
                 users.resize(temp*(temp-1));
+                name_user.resize(temp*(temp-1));
             }else if (counter == 11) {// se extrae la cantidad de enlases totales
                 temp = stoi(temp_str);
 
@@ -135,12 +131,14 @@ void load_routes_file(vector<vector<int>> & users,vector<vector<int>> & waveleng
                             hops = 0;
                             hop_counter = 0;
                             init_flag=0;
+                            name_user[user_counter] = to_string(node_1) + "-" + to_string(node_2);
                             user_counter++;
                         } else {// error al cargar los datos
                             cout  << "ERROR WHILE LOADING RUT FILE" << endl;
                         }
                     }
                 } else {
+
                     load_status = 0;
                 }
             }
