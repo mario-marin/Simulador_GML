@@ -1,3 +1,10 @@
+lamely we werent able yo solve Segmentation fault. 
+
+
+
+
+
+
 README
 
 Programador: Mario Andres Marin Soto, ROL:201321048-1
