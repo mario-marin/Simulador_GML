@@ -224,8 +224,14 @@ int main(int argc, char *argv[])  // argumentos : nombre_de_red, capcidad de enl
     }
     
     //----------testing-----------------
-    //load_scheduler();
-
+/*
+    int potato = find_lambda(2);
+    
+    reserve_lambda(2,potato);
+    save_wavelenght_map_csv(wavelenght_map,"1");
+    free_lambda(2,potato);
+    save_wavelenght_map_csv(wavelenght_map,"2");
+*/
     //-----------------simulation--------------------------
 
     double relative_error = 0.05;
@@ -277,7 +283,7 @@ int main(int argc, char *argv[])  // argumentos : nombre_de_red, capcidad de enl
 
 
     print_results(users,name_user,blocked,total_arrivals);// se imprimen los datos para jupyter
-    save_wavelenght_map_csv(wavelenght_map);
+    save_wavelenght_map_csv(wavelenght_map,"default_csv_elastico");
 
     time_line_out.close();
     return 0;

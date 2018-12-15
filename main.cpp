@@ -261,7 +261,7 @@ int main(int argc, char *argv[])  // argumentos : nombre_de_red, capcidad de enl
 
 
     print_results(users,name_user,blocked,total_arrivals);// se imprimen los datos para jupyter
-    save_wavelenght_map_csv(wavelenght_map);
+    save_wavelenght_map_csv(wavelenght_map,"default_csv_inelastico");
 
     time_line_out.close();
     return 0;
