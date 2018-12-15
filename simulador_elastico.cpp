@@ -14,7 +14,7 @@ using namespace std;
 //////////////////////--global variables--//////////////////////////////////////////
 int generate;               //generate flag
 float usage;                //numero de clientes en el canal
-double blocked = 0;             //numero total de blockeos
+double blocked;             //numero total de blockeos
 double total_arrivals = 0;  //numero total de arrivos
 vector<vector<int>> users;  //usuarios      [usuario_id]->[llegadas,blokeo,#hops,the_hops(links_id's)]
 vector<vector<int>> wavelenght_map; //tabla de uso de los labdas de la red [lambda_id] -> [links_id]
@@ -30,11 +30,13 @@ int find_lambda(int user_id){//metodo First-fit
 	int lambda = -1;
 	int link_id;
 	bool stop;
+    int number_of_hops = users[user_id][2]; //and number of FSU used
+    int counter = 1;
 
 	for (int i = 0; i < max_wavelenght; ++i)
 	{
 		stop = false;
-		for (int x = 0; x < users[user_id][2]; ++x)
+		for (int x = 0; x < number_of_hops; ++x)
 		{
 			link_id = users[user_id][3+x];
 			if (wavelenght_map[i][link_id] == -1) //longitud disponible en enlase
@@ -43,14 +45,19 @@ int find_lambda(int user_id){//metodo First-fit
 				continue;
 			}else{
 				stop = true;
+                counter = 1;
 				break;//longitud no disponible, ocupar la siguiente
 			}
 		}
 
 		if (stop == false)
 		{
-			lambda = i;
-			break;
+            if (counter < number_of_hops){
+                counter++;
+            }else{
+                lambda = i;
+                break;
+            }
 		}
 	}
 
@@ -62,10 +69,17 @@ void reserve_lambda(int user_id,int lambda_id){//metodo First-fit
 
 	if (lambda_id != -1)
 	{
+        //cout << "lambda"<< endl;
+        //cout << lambda_id<< endl;
+        //cout << users[user_id][2]<< endl;
+        //cout << "---"<< endl;
 		for (int x = 0; x < users[user_id][2]; ++x)
 		{
 			link_id = users[user_id][3+x];
-			wavelenght_map[lambda_id][link_id] = user_id;
+            for(int i = 0; i<users[user_id][2];i++){
+                //cout << i<< endl;
+                wavelenght_map[lambda_id-i][link_id] = user_id;
+            }
 		}
 	}else{
 		cout << "Cant assign -1 lambda" <<endl;
@@ -79,7 +93,9 @@ void free_lambda(int user_id,int lambda_id){//metodo First-fit
 		for (int x = 0; x < users[user_id][2]; ++x)
 		{
 			link_id = users[user_id][3+x];
-			wavelenght_map[lambda_id][link_id] = -1;
+			for(int i = 0; i<users[user_id][2];i++){
+                wavelenght_map[lambda_id-i][link_id] = -1;
+            }
 		}
 	}else{
 		cout << "Cant free -1 lambda" <<endl;
@@ -208,8 +224,14 @@ int main(int argc, char *argv[])  // argumentos : nombre_de_red, capcidad de enl
     }
     
     //----------testing-----------------
-    //load_scheduler();
-
+/*
+    int potato = find_lambda(2);
+    
+    reserve_lambda(2,potato);
+    save_wavelenght_map_csv(wavelenght_map,"1");
+    free_lambda(2,potato);
+    save_wavelenght_map_csv(wavelenght_map,"2");
+*/
     //-----------------simulation--------------------------
 
     double relative_error = 0.05;
@@ -246,7 +268,7 @@ int main(int argc, char *argv[])  // argumentos : nombre_de_red, capcidad de enl
         }
         free(evento_temp);                  //se elimina el evento procesado
 
-        if(total_arrivals > 10000){
+        if(total_arrivals > 1000){
             prob = blocked/total_arrivals;
             //cout << prob << endl;
             if( prob != 0.0 && total_arrivals < 10000000){
@@ -261,7 +283,7 @@ int main(int argc, char *argv[])  // argumentos : nombre_de_red, capcidad de enl
 
 
     print_results(users,name_user,blocked,total_arrivals);// se imprimen los datos para jupyter
-    save_wavelenght_map_csv(wavelenght_map,"default_csv_inelastico");
+    save_wavelenght_map_csv(wavelenght_map,"default_csv_elastico");
 
     time_line_out.close();
     return 0;
